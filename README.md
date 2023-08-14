@@ -60,8 +60,46 @@ Remember to keep your private key secure and never share it with others.
 
 ## Customization
 
-You can customize the Vagrant configuration by editing the Vagrantfile. Adjust the vb.memory and vb.cpus values to match your system's available resources.
+You can customize the Vagrant configuration by editing the Vagrantfile. The Vagrantfile controls various aspects of the VM setup, including memory and CPU allocation. Here's an explanation of the Vagrantfile configuration:
+Vagrant.configure("2") do |config|
 
+This line starts the Vagrant configuration block. "2" specifies the version of Vagrant configuration syntax being used.
+
+   ```
+  config.vm.box = "generic/ubuntu2204"
+   ```
+
+This line sets the base box for the virtual machine. The specified box, `"generic/ubuntu2204"`, indicates that you want to use an Ubuntu 22.04 image from the Vagrant Cloud. A base box is a pre-built virtual machine image that Vagrant uses to create VMs.
+
+
+   ```
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 4096
+    vb.cpus = 2
+  end
+   ```
+
+This section configures the provider-specific settings for VirtualBox. The config.vm.provider block allows you to specify settings that are specific to the chosen provider (in this case, VirtualBox). The settings within the block determine the amount of memory and the number of CPUs allocated to the VM. In this example, the VM is configured to have 4 GB of memory and 2 virtual CPUs.
+
+
+   ```
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt update
+    sudo apt upgrade -y
+  SHELL
+   ```
+
+This section defines the provisioning script to be run on the VM. The config.vm.provision block specifies that a shell script should be executed on the VM during provisioning. The script updates the package repositories (apt update) and upgrades installed packages (apt upgrade -y). The `-y` flag automatically confirms any prompts during the upgrade process.
+
+The `<<-SHELL` syntax is used to create a multi-line string that contains the shell script. The actual script is enclosed between the SHELL delimiters.
+
+The provisioning script ensures that the VM is updated with the latest package information and any available upgrades before further configuration or use.
+
+   ```
+end
+   ```
+
+This line marks the end of the Vagrant configuration block.
 ## Provisioning (Optional)
 
 If you want to customize the provisioning process, you can modify the provisioning script within the `Vagrantfile`. For example, you can install additional software or configure settings based on your needs.
