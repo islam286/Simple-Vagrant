@@ -1,0 +1,37 @@
+Vagrant.configure("2") do |config|
+
+    config.vm.define "replica" do |replica|
+        replica.vm.box = "generic/ubuntu2204"
+        replica.vm.network "private_network", ip: "192.168.56.2"    
+        replica.vm.provider "virtualbox" do |vb|
+        vb.memory = 4096
+        vb.cpus = 2
+        end
+
+        replica.vm.provision "shell", inline: <<-SHELL
+        sudo apt-get update
+        sudo apt-get upgrade -y
+
+
+
+        # Install MySQL client for replication setup
+        sudo apt-get install -y mysql-server-8.0
+        sudo apt-get install -y mysql-client
+
+        # # # Install MySQL
+        sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password root'
+        sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password root'
+        sudo apt-get install -y mysql-server-8.0
+
+        
+        # Replicate MySQL data from primary to replica
+        # MASTER_LOG_FILE=$(mysql -u root -proot -h 192.168.56.3 -e "SHOW MASTER STATUS\G" | awk '/File:/ {print $2}')
+        # MASTER_LOG_POS=$(mysql -u root -proot -h 192.168.56.3 -e "SHOW MASTER STATUS\G" | awk '/Position:/ {print $2}')        
+        sudo mysql -u root -proot -e "CHANGE MASTER TO MASTER_HOST='192.168.56.3', MASTER_USER='slave', MASTER_PASSWORD='slave', MASTER_LOG_FILE='mysql-bin.000003', MASTER_LOG_POS=157;"
+
+        sudo mysql -u root -proot -e "START SLAVE;"
+
+        SHELL
+        replica.vm.network "forwarded_port", guest: 3306, host: 3307
+    end
+end
